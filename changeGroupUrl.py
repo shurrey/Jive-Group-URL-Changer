@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+# Copyright 2018 Scott Hurrey
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 import sys, getopt
 import requests
 import json
@@ -9,21 +17,22 @@ def main(argv):
     password = ''
     oldgroup = ''
     newgroup = ''
+    host = ''
     debug = False
 
-    if len(sys.argv) < 5:
-        print ('changeGroupUrl.py -u <jive username> -p <jive password> -g <old group name> -n <new group name>')
+    if len(sys.argv) < 6:
+        print ('changeGroupUrl.py -j <jive domain i.e. https://my.community.com> -u <jive username> -p <jive password> -g <old group name> -n <new group name>')
         sys.exit(3)
 
     try:
-      opts, args = getopt.getopt(argv,"dhu:p:g:n:",["user=","pass=","oldgroup=","newgroup="])
+      opts, args = getopt.getopt(argv,"dhu:p:g:n:j:",["user=","pass=","oldgroup=","newgroup=","host="])
     except getopt.GetoptError:
-      print ('changeGroupUrl.py -u <jive username> -p <jive password> -g <old group name> -n <new group name> -h -d' )
+      print ('changeGroupUrl.py -j <jive domain i.e. https://my.community.com> -u <jive username> -p <jive password> -g <old group name> -n <new group name> -h -d' )
       sys.exit(2)
 
     for opt, arg in opts:
         if opt == '-h':
-            print ('changeGroupUrl.py -u <jive username> -p <jive password> -g <old group name> -n <new group name> -h -d')
+            print ('changeGroupUrl.py -j <jive domain i.e. https://my.community.com> -u <jive username> -p <jive password> -g <old group name> -n <new group name> -h -d')
             sys.exit()
         elif opt in ("-u", "--user"):
             user = arg
@@ -33,16 +42,19 @@ def main(argv):
             oldgroup = arg
         elif opt in ("-n", "--newgroup"):
             newgroup = arg
+        elif opt in ("-j", "--jive"):
+            host = arg
         elif opt in ("-d", "--debug"):
             debug = True
     if debug:
+        print ('Jive Domain is ', host)
         print ('User is ', user)
         print ('Password is ', password)
         print ('Old Group is ', oldgroup)
         print ('New Group is ', newgroup)
 
     payload = { 'filter' : 'search(' + oldgroup + ')' }
-    r = requests.get('https://community.blackboard.com/api/core/v3/search/places', params=payload, auth=(user, password))
+    r = requests.get(host + '/api/core/v3/search/places', params=payload, auth=(user, password))
 
     if debug:
         print ('URL +---------------------------------------------+')
@@ -67,7 +79,7 @@ def main(argv):
         if debug:
             print(current_group['resources']['html']['ref'])
 
-        if(current_group['resources']['html']['ref'] == 'https://community.blackboard.com/groups/' + oldgroup):
+        if(current_group['resources']['html']['ref'] == host + '/groups/' + oldgroup):
             place_url = current_group['resources']['self']['ref']
             group_type = current_group['groupType']
 
